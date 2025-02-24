@@ -9,7 +9,14 @@
 <h1>Kawiarnia</h1>
 <p>cafe id {{cafe.id}}</p>
 <p>cafe name {{cafe.name}}</p>
-<p>coffee price {{cafe.coffe_price}}</p>
+<p>coffee price {{cafe.coffee_price}}</p>
 <p>location {{cafe.location}}</p>
+<a href={{url_for('edit_cafe',cafe_id=cafe.id)}}>edytuj kawiarnie</a>
+<a href={{url_for('home')}}>wszystkie kawiarnie</a>
+<h2>Dodaj komentarz</h2>
+{% from 'bootstrap5/form.html' import render_form%}
+
+{{ render_form(comment_form) }}
+{{ ckeditor.load() }}
 </body>
 </html>

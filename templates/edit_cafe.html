@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Document</title>
+</head>
+<body>
+<h2>edytuj kawiarnie {{cafe.name}}</h2>
+{% from 'bootstrap5/form.html' import render_form%}
+{{ render_form(form) }}
+<a href={{url_for('show_cafe',cafe_id=cafe.id)}}>Wroc do kawairni</a>
+<a href={{url_for('home')}}>wszystkie kawiarnie</a>
+</body>
+</html>
