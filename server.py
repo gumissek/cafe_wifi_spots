@@ -1,3 +1,4 @@
+import datetime
 import os
 from flask import Flask, render_template, request, url_for
 from flask_wtf import FlaskForm
@@ -8,27 +9,28 @@ from sqlalchemy import Integer, String, Boolean, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from werkzeug.utils import redirect
 from flask_ckeditor import CKEditor
-
-from forms import AddCafeForm, EditCafeForm , CommentForm
+from forms import AddCafeForm, EditCafeForm, CommentForm
 
 # todo zmienic wszystko na zmienne srodowiskowe
+# todo przerobic tabele bo nie ma uniqe i zmienic stringi
 FLASK_KEY = 's123312344adasda'
 DATABASE_URI = ''
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = FLASK_KEY
 bootstrap = Bootstrap5(app)
-ckeditor=CKEditor(app)
-
+ckeditor = CKEditor(app)
 
 
 # BAZA DANYCH
 class Base(DeclarativeBase):
     pass
 
+
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URI', 'sqlite:///cafe.db')
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
+
 
 # TABELE
 class Cafe(db.Model):
@@ -58,6 +60,7 @@ class Comment(db.Model):
     cafe = relationship('Cafe', back_populates='comments')
     cafe_id: Mapped[int] = mapped_column(Integer, db.ForeignKey('cafes.id'))
 
+
 with app.app_context():
     db.create_all()
 
@@ -65,17 +68,23 @@ with app.app_context():
 @app.route('/', methods=['POST', 'GET'])
 def home():
     all_cafes = db.session.execute(db.select(Cafe)).scalars().all()
-    if all_cafes:
-        return render_template('index.html', all_cafes=all_cafes)
-    else:
-        return render_template('blad.html')
+    return render_template('index.html', all_cafes=all_cafes)
 
 
 @app.route('/cafe/<int:cafe_id>', methods=['POST', 'GET'])
 def show_cafe(cafe_id):
-    commentform=CommentForm()
+    commentform = CommentForm()
+    all_comments = db.session.execute(db.select(Comment).where(Comment.cafe_id == cafe_id)).scalars()
+    if commentform.validate_on_submit():
+        comment_autor = request.form['autor']
+        comment_text = request.form['text']
+        new_comment = Comment(author=comment_autor, text=comment_text,
+                              date=datetime.datetime.now().strftime('%d-%m-%Y %H:%M'), cafe_id=cafe_id)
+        db.session.add(new_comment)
+        db.session.commit()
+        return redirect(url_for('show_cafe', cafe_id=cafe_id))
     requested_cafe = db.session.execute(db.select(Cafe).where(Cafe.id == cafe_id)).scalar()
-    return render_template('show_cafe.html', cafe=requested_cafe,comment_form=commentform)
+    return render_template('show_cafe.html', cafe=requested_cafe, comment_form=commentform, comments=all_comments)
 
 
 @app.route('/addcafe', methods=['POST', 'GET'])
@@ -110,7 +119,6 @@ def add_cafe():
 
 @app.route('/edit/<int:cafe_id>', methods=['POST', 'GET'])
 def edit_cafe(cafe_id):
-
     requested_cafe = db.session.execute(db.select(Cafe).where(Cafe.id == cafe_id)).scalar()
     editform = EditCafeForm(map_url=requested_cafe.map_url, img_url=requested_cafe.img_url,
                             location=requested_cafe.location, has_sockets=requested_cafe.has_sockets,
@@ -128,19 +136,19 @@ def edit_cafe(cafe_id):
         requested_cafe.seats = request.form['seats']
         requested_cafe.coffee_price = request.form['coffee_price']
         db.session.commit()
-        return redirect(url_for('show_cafe',cafe_id=cafe_id))
+        return redirect(url_for('show_cafe', cafe_id=cafe_id))
     return render_template('edit_cafe.html', form=editform, cafe=requested_cafe)
 
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
 
-# TODO zrobic strone flask ok
+# TODO zrobic strone flask ***DONE***
 # TODO zrobic zmienne srodowiskowe
-# TODO zrobic zrobic tabele i poloczanie z baza danych ok
-# TODO zrobic strone glowna ktora wyswietla wszystkie rzeczy z bazy danych ok
-# todo zrobic formularz do dodawania kawiarni ok
-# todo zrobic formularz edytowania kawiarni ok
-# todo zrobic
-# todo zrobic funkcjonalosc ktora dodaje punkty
+# TODO zrobic zrobic tabele i poloczanie z baza danych ***DONE***
+# TODO zrobic strone glowna ktora wyswietla wszystkie rzeczy z bazy danych ***DONE***
+# todo zrobic formularz do dodawania kawiarni ***DONE***
+# todo zrobic formularz edytowania kawiarni ***DONE***
+# todo zrobic formularz do dodawania komentarz ***DONE***
+# todo zrobic funkcjonalosc ktora dodaje punkty mam na mysli selectfields ***DONE***
 # TODO zrobic api tak zeby kazdy mogl modyfikowac ta liste i dokumentacje do tego

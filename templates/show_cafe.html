@@ -18,5 +18,13 @@
 
 {{ render_form(comment_form) }}
 {{ ckeditor.load() }}
+<h2>Komentarze</h2>
+{%if comments%}
+{%for comment in comments%}
+<p>{{comment.author}}  {{comment.date}}</p>
+{{comment.text|safe}}
+{%endfor%}
+{%endif%}
+
 </body>
 </html>
