@@ -142,7 +142,7 @@ def edit_cafe(cafe_id):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
-
+# TODO zrobic layout do tego
 # TODO zrobic strone flask ***DONE***
 # TODO zrobic zmienne srodowiskowe
 # TODO zrobic zrobic tabele i poloczanie z baza danych ***DONE***
