@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Document</title>
+</head>
+<body>
+<h1>Strona glowna</h1>
+{%for cafe in all_cafes%}
+<li>{{cafe.id}} {{cafe.name}} {{cafe.coffee_price}} <a href={{url_for('show_cafe',cafe_id=cafe.id)}}>link</a></li>
+{%endfor%}
+
+</body>
+</html>
