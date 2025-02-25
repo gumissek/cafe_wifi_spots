@@ -2,16 +2,17 @@ from flask_wtf import FlaskForm
 from flask_ckeditor import CKEditorField
 from wtforms.fields.choices import SelectField
 from wtforms.fields.numeric import IntegerField
-from wtforms.fields.simple import StringField, URLField, BooleanField, SubmitField
-from wtforms.validators import DataRequired
+from wtforms.fields.simple import StringField, URLField, SubmitField
+from wtforms.validators import DataRequired, URL
 
 
 class AddCafeForm(FlaskForm):
     name = StringField(label='Cafe name:', validators=[DataRequired(message='This field should contain email.')])
-    map_url = StringField(label='Google map link:',
-                          validators=[DataRequired(message='This field should contain a link to Google Maps.')])
-    img_url = StringField(label='Image of cafe:',
-                          validators=[DataRequired(message='This field should contain a link to the image of the cafe.')])
+    map_url = URLField(label='Google map link:',
+                       validators=[DataRequired(message='This field should contain a link to Google Maps.'), URL()])
+    img_url = URLField(label='Image of cafe:',
+                       validators=[DataRequired(message='This field should contain a link to the image of the cafe.'),
+                                   URL()])
     location = StringField(label='Adress:', validators=[DataRequired(message='This field should contain an address.')])
     has_sockets = SelectField(label='How many sockets:',
                               choices=[('✘', '✘'), ('🔌', '🔌'), ('🔌🔌', '🔌🔌'), ('🔌🔌🔌', '🔌🔌🔌'), ('🔌🔌🔌🔌', '🔌🔌🔌🔌'),
@@ -32,11 +33,11 @@ class AddCafeForm(FlaskForm):
 
 
 class EditCafeForm(FlaskForm):
-    map_url = StringField(label='Google map`s link:',
-                          validators=[DataRequired(message='To pole powinno zawierac, link do map googla')])
-    img_url = StringField(label='Image of cafe',
-                          validators=[DataRequired(message='To pole powinno zawierac link do obrazka kawiarni')])
-    location = StringField(label='Adress:', validators=[DataRequired(message='To pole powinno zawierac adres')])
+    map_url = URLField(label='Google map`s link:',
+                       validators=[DataRequired(message='This field should contain a link to Google Maps.')])
+    img_url = URLField(label='Image of cafe',
+                       validators=[DataRequired(message='This field should contain a link to the image of the cafe.')])
+    location = StringField(label='Adress:', validators=[DataRequired(message='This field should contain an address.')])
     has_sockets = SelectField(label='How many sockets:',
                               choices=[('✘', '✘'), ('🔌', '🔌'), ('🔌🔌', '🔌🔌'), ('🔌🔌🔌', '🔌🔌🔌'), ('🔌🔌🔌🔌', '🔌🔌🔌🔌'),
                                        ('🔌🔌🔌🔌🔌', '🔌🔌🔌🔌🔌')])

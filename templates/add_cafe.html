@@ -5,7 +5,19 @@
 {%block content%}
 
 <div class="container">
-    <h2 class="text-center">Dodaj nowa kawiarnie!</h2>
+    <h2 class="text-center">Add new cafe!</h2>
+    <p class="text-center" style="color:red">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+
+        {% for message in messages %}
+
+        {{ message }}
+        {% endfor %}
+
+        {% endif %}
+        {% endwith %}
+    </p>
     {% from 'bootstrap5/form.html' import render_form%}
     {{ render_form(form,novalidate=True) }}
     <br>

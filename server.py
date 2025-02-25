@@ -2,22 +2,17 @@ import datetime
 import os
 import random
 
-from flask import Flask, render_template, request, url_for, jsonify
+from flask import Flask, render_template, request, url_for, jsonify, flash
 from flask_bootstrap import Bootstrap5
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import Integer, String, Boolean, Text
+from sqlalchemy import Integer, String, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from werkzeug.utils import redirect
 from flask_ckeditor import CKEditor
 from forms import AddCafeForm, EditCafeForm, CommentForm
 
-# todo zmienic wszystko na zmienne srodowiskowe
-# todo przerobic tabele bo nie ma uniqe i zmienic stringi
-FLASK_KEY = 's123312344adasda'
-DATABASE_URI = ''
-
 app = Flask(__name__)
-app.config['SECRET_KEY'] = FLASK_KEY
+app.config['SECRET_KEY'] = os.getenv('FLASK_KEY')
 bootstrap = Bootstrap5(app)
 ckeditor = CKEditor(app)
 
@@ -67,9 +62,11 @@ class Comment(db.Model):
 with app.app_context():
     db.create_all()
 
-@app.route('/',methods=['POST','GET'])
+
+@app.route('/', methods=['POST', 'GET'])
 def start():
     return render_template('start.html')
+
 
 @app.route('/cafes', methods=['POST', 'GET'])
 def home():
@@ -97,28 +94,32 @@ def add_cafe():
     add_form = AddCafeForm()
     if add_form.validate_on_submit():
         cafe_name = request.form['name']
-        cafe_map_url = request.form['map_url']
-        cafe_img_url = request.form['img_url']
-        cafe_location = request.form['location']
-        cafe_has_sockets = request.form['has_sockets']
-        cafe_has_wifi = request.form['has_wifi']
-        cafe_has_toilet = request.form['has_toilet']
-        cafe_can_take_calls = request.form['can_take_calls']
-        cafe_seats = request.form['seats']
-        cafe_coffe_price = request.form['coffee_price']
-        new_cafe = Cafe(name=cafe_name,
-                        map_url=cafe_map_url,
-                        img_url=cafe_img_url,
-                        location=cafe_location,
-                        has_sockets=cafe_has_sockets,
-                        has_wifi=cafe_has_wifi,
-                        has_toilet=cafe_has_toilet,
-                        can_take_calls=cafe_can_take_calls,
-                        seats=cafe_seats,
-                        coffee_price=cafe_coffe_price)
-        db.session.add(new_cafe)
-        db.session.commit()
-        return redirect(url_for('home'))
+        if not db.session.execute(db.select(Cafe).where(Cafe.name == cafe_name)).scalar():
+            cafe_map_url = request.form['map_url']
+            cafe_img_url = request.form['img_url']
+            cafe_location = request.form['location']
+            cafe_has_sockets = request.form['has_sockets']
+            cafe_has_wifi = request.form['has_wifi']
+            cafe_has_toilet = request.form['has_toilet']
+            cafe_can_take_calls = request.form['can_take_calls']
+            cafe_seats = request.form['seats']
+            cafe_coffe_price = request.form['coffee_price']
+            new_cafe = Cafe(name=cafe_name,
+                            map_url=cafe_map_url,
+                            img_url=cafe_img_url,
+                            location=cafe_location,
+                            has_sockets=cafe_has_sockets,
+                            has_wifi=cafe_has_wifi,
+                            has_toilet=cafe_has_toilet,
+                            can_take_calls=cafe_can_take_calls,
+                            seats=cafe_seats,
+                            coffee_price=cafe_coffe_price)
+            db.session.add(new_cafe)
+            db.session.commit()
+            return redirect(url_for('home'))
+        else:
+            flash('In database exists cafe with that name')
+            return redirect(url_for('add_cafe'))
     return render_template('add_cafe.html', form=add_form)
 
 
@@ -147,81 +148,78 @@ def edit_cafe(cafe_id):
 
 # API
 
-@app.route('/api/delete/<int:cafe_id>',methods=['DELETE'])
+@app.route('/api/delete/<int:cafe_id>', methods=['DELETE'])
 def delete_cafe(cafe_id):
-    cafe_to_delete=db.session.execute(db.select(Cafe).where(Cafe.id==cafe_id)).scalar()
+    cafe_to_delete = db.session.execute(db.select(Cafe).where(Cafe.id == cafe_id)).scalar()
     if cafe_to_delete:
         db.session.delete(cafe_to_delete)
         db.session.commit()
-        return jsonify(response={'Success':f'cafe with id:{cafe_id} has been removed from database'})
+        return jsonify(response={'Success': f'cafe with id:{cafe_id} has been removed from database'})
     else:
-        return jsonify(response={'error':f'cafe with id:{cafe_id} doesnt exist in database'})
+        return jsonify(response={'error': f'cafe with id:{cafe_id} doesnt exist in database'})
 
-@app.route('/api/update/<int:cafe_id>',methods=['PATCH'])
+
+@app.route('/api/update/<int:cafe_id>', methods=['PATCH'])
 def update_cafe(cafe_id):
-    selected_cafe=db.session.execute(db.select(Cafe).where(Cafe.id==cafe_id)).scalar()
+    selected_cafe = db.session.execute(db.select(Cafe).where(Cafe.id == cafe_id)).scalar()
     if selected_cafe:
         selected_cafe.coffee_price = request.args.get('new_price')
         db.session.commit()
-        return jsonify(response={'Success':f'Coffee price has been updated in {selected_cafe.name}:{selected_cafe.id}'})
+        return jsonify(
+            response={'Success': f'Coffee price has been updated in {selected_cafe.name}:{selected_cafe.id}'})
     else:
-        return jsonify(response={'error':'Index not found, there is not cafe with that id!'})
+        return jsonify(response={'error': 'Index not found, there is not cafe with that id!'})
 
-@app.route('/api/add_new_cafe',methods=['POST'])
+
+@app.route('/api/add_new_cafe', methods=['POST'])
 def add_new_cafe():
     cafe_name = request.form['name']
-    cafe_map_url = request.form['map_url']
-    cafe_img_url = request.form['img_url']
-    cafe_location = request.form['location']
-    cafe_has_sockets = request.form['has_sockets']
-    cafe_has_wifi = request.form['has_wifi']
-    cafe_has_toilet = request.form['has_toilet']
-    cafe_can_take_calls = request.form['can_take_calls']
-    cafe_seats = request.form['seats']
-    cafe_coffe_price = request.form['coffee_price']
-    new_cafe = Cafe(name=cafe_name,
-                    map_url=cafe_map_url,
-                    img_url=cafe_img_url,
-                    location=cafe_location,
-                    has_sockets=cafe_has_sockets,
-                    has_wifi=cafe_has_wifi,
-                    has_toilet=cafe_has_toilet,
-                    can_take_calls=cafe_can_take_calls,
-                    seats=cafe_seats,
-                    coffee_price=cafe_coffe_price)
-    db.session.add(new_cafe)
-    db.session.commit()
-    return jsonify(response={'Success':'New cafe has been added to database'})
+    if not db.session.execute(db.select(Cafe).where(Cafe.name == cafe_name)).scalar():
+        cafe_map_url = request.form['map_url']
+        cafe_img_url = request.form['img_url']
+        cafe_location = request.form['location']
+        cafe_has_sockets = request.form['has_sockets']
+        cafe_has_wifi = request.form['has_wifi']
+        cafe_has_toilet = request.form['has_toilet']
+        cafe_can_take_calls = request.form['can_take_calls']
+        cafe_seats = request.form['seats']
+        cafe_coffe_price = request.form['coffee_price']
+        new_cafe = Cafe(name=cafe_name,
+                        map_url=cafe_map_url,
+                        img_url=cafe_img_url,
+                        location=cafe_location,
+                        has_sockets=cafe_has_sockets,
+                        has_wifi=cafe_has_wifi,
+                        has_toilet=cafe_has_toilet,
+                        can_take_calls=cafe_can_take_calls,
+                        seats=cafe_seats,
+                        coffee_price=cafe_coffe_price)
+        db.session.add(new_cafe)
+        db.session.commit()
+        return jsonify(response={'Success': 'New cafe has been added to database'})
+    else:
+        return jsonify(response={'error': 'Cafe with that name already exists in database'})
 
-@app.route('/api/get_random_cafe',methods=['GET'])
+
+@app.route('/api/get_random_cafe', methods=['GET'])
 def get_random_cafe():
-    all_cafes=db.session.execute(db.select(Cafe)).scalars().all()
-    random_cafe=random.choice(all_cafes)
-    return jsonify({'cafe':random_cafe.to_dict()})
+    all_cafes = db.session.execute(db.select(Cafe)).scalars().all()
+    random_cafe = random.choice(all_cafes)
+    return jsonify({'cafe': random_cafe.to_dict()})
 
-@app.route('/api/search',methods=['GET'])
+
+@app.route('/api/search', methods=['GET'])
 def get_by_location():
-    location=request.args.get('loc')
-    requested_cafes=db.session.execute(db.select(Cafe).where(Cafe.location==location)).scalars()
-    return jsonify(cafes={cafe.name:cafe.to_dict() for cafe in requested_cafes})
+    location = request.args.get('loc')
+    requested_cafes = db.session.execute(db.select(Cafe).where(Cafe.location == location)).scalars()
+    return jsonify(cafes={cafe.name: cafe.to_dict() for cafe in requested_cafes})
 
 
-@app.route('/api/get_cafes',methods=['GET'])
+@app.route('/api/get_cafes', methods=['GET'])
 def get_all_cafes():
-    all_cafes=db.session.execute(db.select(Cafe)).scalars().all()
+    all_cafes = db.session.execute(db.select(Cafe)).scalars().all()
     return jsonify(cafes=[cafe.to_dict() for cafe in all_cafes])
-
 
 
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
-# TODO zrobic layout do tego ***DONE***
-# TODO zrobic strone flask ***DONE***
-# TODO zrobic zmienne srodowiskowe
-# TODO zrobic zrobic tabele i poloczanie z baza danych ***DONE***
-# TODO zrobic strone glowna ktora wyswietla wszystkie rzeczy z bazy danych ***DONE***
-# todo zrobic formularz do dodawania kawiarni ***DONE***
-# todo zrobic formularz edytowania kawiarni ***DONE***
-# todo zrobic formularz do dodawania komentarzy ***DONE***
-# todo zrobic funkcjonalosc ktora dodaje punkty mam na mysli selectfields ***DONE***
-# TODO zrobic api tak zeby kazdy mogl modyfikowac ta liste i dokumentacje do tego ***DONE**

@@ -6,8 +6,8 @@
 <div class="container my-5">
 
     <h1 class="display-3">Cafe : {{cafe.name}}</h1>
-    <p class="lead">Google map link: <a href="{{cafe.map_url}}" target="_blank">LINK</a> </p>
-    <p class="lead">Image: <a href="{{cafe.img_url}}" target="_blank">LINK</a> </p>
+    <p class="lead">Google map link: <a href="{{cafe.map_url}}" target="_blank">LINK</a></p>
+    <p class="lead">Image: <a href="{{cafe.img_url}}" target="_blank">LINK</a></p>
     <p class="lead">Location: {{cafe.location}}</p>
     <p class="lead">Sockets: {{cafe.has_sockets}}</p>
     <p class="lead">WiFi: {{cafe.has_wifi}}</p>
@@ -29,9 +29,9 @@
     <h3>All comments:</h3>
     {%if cafe.comments%}
     {%for comment in cafe.comments%}
-    <p>Author: {{comment.author}}  <br>  date: {{comment.date}}</p>
+    <p>Author: {{comment.author}} <br> date: {{comment.date}}</p>
     {{comment.text|safe}}
-        <hr>
+    <hr>
     {%endfor%}
     {%endif%}
 </div>
