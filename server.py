@@ -1,9 +1,9 @@
 import datetime
 import os
-from flask import Flask, render_template, request, url_for
-from flask_wtf import FlaskForm
+import random
+
+from flask import Flask, render_template, request, url_for, jsonify
 from flask_bootstrap import Bootstrap5
-import sqlite3
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import Integer, String, Boolean, Text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
@@ -49,6 +49,9 @@ class Cafe(db.Model):
 
     comments = relationship('Comment', back_populates='cafe')
 
+    def to_dict(self):
+        return {column.name: getattr(self, column.name) for column in self.__table__.columns}
+
 
 class Comment(db.Model):
     __tablename__ = 'comments'
@@ -64,8 +67,11 @@ class Comment(db.Model):
 with app.app_context():
     db.create_all()
 
+@app.route('/',methods=['POST','GET'])
+def start():
+    return render_template('start.html')
 
-@app.route('/', methods=['POST', 'GET'])
+@app.route('/cafes', methods=['POST', 'GET'])
 def home():
     all_cafes = db.session.execute(db.select(Cafe)).scalars().all()
     return render_template('index.html', all_cafes=all_cafes)
@@ -74,7 +80,6 @@ def home():
 @app.route('/cafe/<int:cafe_id>', methods=['POST', 'GET'])
 def show_cafe(cafe_id):
     commentform = CommentForm()
-    all_comments = db.session.execute(db.select(Comment).where(Comment.cafe_id == cafe_id)).scalars()
     if commentform.validate_on_submit():
         comment_autor = request.form['autor']
         comment_text = request.form['text']
@@ -84,7 +89,7 @@ def show_cafe(cafe_id):
         db.session.commit()
         return redirect(url_for('show_cafe', cafe_id=cafe_id))
     requested_cafe = db.session.execute(db.select(Cafe).where(Cafe.id == cafe_id)).scalar()
-    return render_template('show_cafe.html', cafe=requested_cafe, comment_form=commentform, comments=all_comments)
+    return render_template('show_cafe.html', cafe=requested_cafe, comment_form=commentform)
 
 
 @app.route('/addcafe', methods=['POST', 'GET'])
@@ -140,15 +145,83 @@ def edit_cafe(cafe_id):
     return render_template('edit_cafe.html', form=editform, cafe=requested_cafe)
 
 
+# API
+
+@app.route('/api/delete/<int:cafe_id>',methods=['DELETE'])
+def delete_cafe(cafe_id):
+    cafe_to_delete=db.session.execute(db.select(Cafe).where(Cafe.id==cafe_id)).scalar()
+    if cafe_to_delete:
+        db.session.delete(cafe_to_delete)
+        db.session.commit()
+        return jsonify(response={'Success':f'cafe with id:{cafe_id} has been removed from database'})
+    else:
+        return jsonify(response={'error':f'cafe with id:{cafe_id} doesnt exist in database'})
+
+@app.route('/api/update/<int:cafe_id>',methods=['PATCH'])
+def update_cafe(cafe_id):
+    selected_cafe=db.session.execute(db.select(Cafe).where(Cafe.id==cafe_id)).scalar()
+    if selected_cafe:
+        selected_cafe.coffee_price = request.args.get('new_price')
+        db.session.commit()
+        return jsonify(response={'Success':f'Coffee price has been updated in {selected_cafe.name}:{selected_cafe.id}'})
+    else:
+        return jsonify(response={'error':'Index not found, there is not cafe with that id!'})
+
+@app.route('/api/add_new_cafe',methods=['POST'])
+def add_new_cafe():
+    cafe_name = request.form['name']
+    cafe_map_url = request.form['map_url']
+    cafe_img_url = request.form['img_url']
+    cafe_location = request.form['location']
+    cafe_has_sockets = request.form['has_sockets']
+    cafe_has_wifi = request.form['has_wifi']
+    cafe_has_toilet = request.form['has_toilet']
+    cafe_can_take_calls = request.form['can_take_calls']
+    cafe_seats = request.form['seats']
+    cafe_coffe_price = request.form['coffee_price']
+    new_cafe = Cafe(name=cafe_name,
+                    map_url=cafe_map_url,
+                    img_url=cafe_img_url,
+                    location=cafe_location,
+                    has_sockets=cafe_has_sockets,
+                    has_wifi=cafe_has_wifi,
+                    has_toilet=cafe_has_toilet,
+                    can_take_calls=cafe_can_take_calls,
+                    seats=cafe_seats,
+                    coffee_price=cafe_coffe_price)
+    db.session.add(new_cafe)
+    db.session.commit()
+    return jsonify(response={'Success':'New cafe has been added to database'})
+
+@app.route('/api/get_random_cafe',methods=['GET'])
+def get_random_cafe():
+    all_cafes=db.session.execute(db.select(Cafe)).scalars().all()
+    random_cafe=random.choice(all_cafes)
+    return jsonify({'cafe':random_cafe.to_dict()})
+
+@app.route('/api/search',methods=['GET'])
+def get_by_location():
+    location=request.args.get('loc')
+    requested_cafes=db.session.execute(db.select(Cafe).where(Cafe.location==location)).scalars()
+    return jsonify(cafes={cafe.name:cafe.to_dict() for cafe in requested_cafes})
+
+
+@app.route('/api/get_cafes',methods=['GET'])
+def get_all_cafes():
+    all_cafes=db.session.execute(db.select(Cafe)).scalars().all()
+    return jsonify(cafes=[cafe.to_dict() for cafe in all_cafes])
+
+
+
 if __name__ == '__main__':
     app.run(debug=True, port=5001)
-# TODO zrobic layout do tego
+# TODO zrobic layout do tego ***DONE***
 # TODO zrobic strone flask ***DONE***
 # TODO zrobic zmienne srodowiskowe
 # TODO zrobic zrobic tabele i poloczanie z baza danych ***DONE***
 # TODO zrobic strone glowna ktora wyswietla wszystkie rzeczy z bazy danych ***DONE***
 # todo zrobic formularz do dodawania kawiarni ***DONE***
 # todo zrobic formularz edytowania kawiarni ***DONE***
-# todo zrobic formularz do dodawania komentarz ***DONE***
+# todo zrobic formularz do dodawania komentarzy ***DONE***
 # todo zrobic funkcjonalosc ktora dodaje punkty mam na mysli selectfields ***DONE***
-# TODO zrobic api tak zeby kazdy mogl modyfikowac ta liste i dokumentacje do tego
+# TODO zrobic api tak zeby kazdy mogl modyfikowac ta liste i dokumentacje do tego ***DONE**

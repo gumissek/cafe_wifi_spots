@@ -1,15 +1,15 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Document</title>
-</head>
-<body>
-<h2>dodaj kawiarnie</h2>
-{% from 'bootstrap5/form.html' import render_form%}
-{{ render_form(form) }}
-<a href={{url_for('home')}}>wszystkie kawiarnie</a>
+{% extends 'base.html' %}
+{% block title%} Add new cafe! {%endblock%}
 
-</body>
-</html>
+
+{%block content%}
+
+<div class="container">
+    <h2 class="text-center">Dodaj nowa kawiarnie!</h2>
+    {% from 'bootstrap5/form.html' import render_form%}
+    {{ render_form(form,novalidate=True) }}
+    <br>
+    <a href={{url_for('home')}} class="btn btn-warning">All cafes!</a>
+
+</div>
+{%endblock%}

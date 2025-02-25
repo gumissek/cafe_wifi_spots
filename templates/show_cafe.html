@@ -1,30 +1,39 @@
-<!doctype html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Document</title>
-</head>
-<body>
-<h1>Kawiarnia</h1>
-<p>cafe id {{cafe.id}}</p>
-<p>cafe name {{cafe.name}}</p>
-<p>coffee price {{cafe.coffee_price}}</p>
-<p>location {{cafe.location}}</p>
-<a href={{url_for('edit_cafe',cafe_id=cafe.id)}}>edytuj kawiarnie</a>
-<a href={{url_for('home')}}>wszystkie kawiarnie</a>
-<h2>Dodaj komentarz</h2>
-{% from 'bootstrap5/form.html' import render_form%}
+{% extends 'base.html' %}
+{% block title%} Cafe: {{cafe.name}} {%endblock%}
 
-{{ render_form(comment_form) }}
-{{ ckeditor.load() }}
-<h2>Komentarze</h2>
-{%if comments%}
-{%for comment in comments%}
-<p>{{comment.author}}  {{comment.date}}</p>
-{{comment.text|safe}}
-{%endfor%}
-{%endif%}
 
-</body>
-</html>
+{%block content%}
+<div class="container my-5">
+
+    <h1 class="display-3">Cafe : {{cafe.name}}</h1>
+    <p class="lead">Google map link: <a href="{{cafe.map_url}}" target="_blank">LINK</a> </p>
+    <p class="lead">Image: <a href="{{cafe.img_url}}" target="_blank">LINK</a> </p>
+    <p class="lead">Location: {{cafe.location}}</p>
+    <p class="lead">Sockets: {{cafe.has_sockets}}</p>
+    <p class="lead">WiFi: {{cafe.has_wifi}}</p>
+    <p class="lead">Toilet: {{cafe.has_toilet}}</p>
+    <p class="lead">Take calls: {{cafe.can_take_calls}}</p>
+    <p class="lead">Seats: {{cafe.seats}}</p>
+    <p class="lead">Coffe Price: {{cafe.coffee_price}}</p>
+    <br>
+    <a href={{url_for('edit_cafe',cafe_id=cafe.id)}} class="btn btn-warning">Edit cafe!</a>
+
+    <a href={{url_for('home')}} class="btn btn-warning">All cafes!</a>
+    <hr class="my-4">
+    <h3>Add comment:</h3>
+    {% from 'bootstrap5/form.html' import render_form%}
+
+    {{ render_form(comment_form,novalidate=True) }}
+    {{ ckeditor.load() }}
+    <hr class="my-4">
+    <h3>All comments:</h3>
+    {%if cafe.comments%}
+    {%for comment in cafe.comments%}
+    <p>Author: {{comment.author}}  <br>  date: {{comment.date}}</p>
+    {{comment.text|safe}}
+        <hr>
+    {%endfor%}
+    {%endif%}
+</div>
+{%endblock%}
+
