@@ -52,7 +52,7 @@ class EditCafeForm(FlaskForm):
                         choices=[('✘', '✘'), ('🪑', '🪑'), ('🪑🪑', '🪑🪑'), ('🪑🪑🪑', '🪑🪑🪑'), ('🪑🪑🪑🪑', '🪑🪑🪑🪑'),
                                  ('🪑🪑🪑🪑🪑', '🪑🪑🪑🪑🪑')])
 
-    coffee_price = StringField(label='Coffee price:', validators=[DataRequired()])
+    coffee_price = IntegerField(label='Coffee price:', validators=[DataRequired()])
     submit_button = SubmitField(label='Edit cafe!')
 
 
